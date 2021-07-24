@@ -9,8 +9,7 @@ Usage
 
 Configure convert.js to your needs, open up your terminal, cd into ConvertJS folder then run `node convert.js`
 
-Example: `cd /home/username/Desktop/ConvertJS`
-         `node convert.js`
+Example: `cd /home/username/Desktop/ConvertJS` and then `node convert.js`
 
 
 API documentation for NBT.js
