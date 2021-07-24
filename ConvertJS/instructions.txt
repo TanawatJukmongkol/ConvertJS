@@ -1,5 +1,7 @@
 Convert.js v1.6.0 stable
 Get your own map art at https://rebane2001.com/mapartcraft/
+Fork me at GitHub! https://github.com/TanawatJukmongkol/ConvertJS
+
 ////////// line 1 //////////
 
 -- chunk 1 --
