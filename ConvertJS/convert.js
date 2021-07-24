@@ -28,7 +28,7 @@ const program_config = {
     },
     license: "MIT",
     creator: "Tanawat J.",
-    GitHub: ""
+    GitHub: "https://github.com/TanawatJukmongkol/ConvertJS"
 };
 
 
@@ -99,7 +99,7 @@ function convert (data) {
 
     console.log("Converting to human readable instructions...");
 
-    let instr = "Convert.js "+program_config.version+"\nGet your own map art at https://rebane2001.com/mapartcraft/";
+    let instr = "Convert.js "+program_config.version+"\nGet your own map art at https://rebane2001.com/mapartcraft/\nFork me at GitHub! "+program_config.GitHub+"\n";
     let reports = "";
     let count = 0;
 
