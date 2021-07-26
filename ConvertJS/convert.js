@@ -24,8 +24,7 @@
 
 const program_config = {
     // Inputs
-    Raw_NBT: "./rawExample.nbt", // NBT File Path
-    JSON_File: "", // JSON File Path
+    input: "./rawExample.nbt", // NBT/JSON File Path
 
     // Outputs
     SaveAs: "instructions", // Name to save as your output.
@@ -60,71 +59,84 @@ const metadata = {
 
 /////////////////////////////////////////////////////////////
 
-console.log("Convert.js "+metadata.version);
+console.log(`Convert.js ${metadata.version}`);
 
 const fs = require('fs'),
       nbt = require('./nbt.js');
+      
+main();
 
-if (program_config.Raw_NBT) {
-    console.log("Reading NBT file...");
-    nbt.parse(fs.readFileSync(program_config.Raw_NBT), function(error, data) {
-        // {block:{value:{value:[{},{},{},...,{#N}]}}} // data
-        if (error) { throw error; }
-        // 
-        let _data = {
-            blocks:[/*
-                [{pos:[0,0,0],state:22},{},{},...,{}], // Ignored
-                [{},{},{},...,{}],
-                [{},{},{},...,{}],
-                    ...
-                [{},{},{},...,{}],
-            */],
-            palette: data.value.palette.value.value, // ["minecraft:birch_plank",...]
-            size: data.value.size.value.value,
-        };
-        console.log("Clean up data...");
-        // Clean up data value mess.
-        while(data.value.blocks.value.value.length > 0){
-            let blockSet = data.value.blocks.value.value.slice(0, _data.size[2]);
-            for (var i = 0; i < blockSet.length; i++) {
-                let pos = blockSet[i].pos.value.value;
-                let state = blockSet[i].state.value;
-                blockSet[i].pos = pos;
-                blockSet[i].state = state;
+function main () {
+    if (!program_config.input) {console.error("No input was given.");return;}
+    let path = program_config.input.split("/");
+    let name = path[path.length-1];
+    let extensions = name.split(".");
+    let extension = extensions[extensions.length-1];
+    switch (extension) {
+        case "nbt":
+            console.log("Reading NBT file...");
+            function cleanMapData (data) {
+                let _data = {
+                    blocks:[/*
+                        [{pos:[0,0,0],state:22},{},{},...,{}], // Ignored
+                        [{},{},{},...,{}],
+                        [{},{},{},...,{}],
+                            ...
+                        [{},{},{},...,{}],
+                    */],
+                    palette: data.value.palette.value.value, // ["minecraft:birch_plank",...]
+                    size: data.value.size.value.value,
+                };
+                console.log("Clean up data...");
+                while(data.value.blocks.value.value.length > 0){
+                    let blockSet = data.value.blocks.value.value.slice(0, _data.size[2]);
+                    for (var i = 0; i < blockSet.length; i++) {
+                        let pos = blockSet[i].pos.value.value;
+                        let state = blockSet[i].state.value;
+                        blockSet[i].pos = pos;
+                        blockSet[i].state = state;
+                    }
+                    _data.blocks.push(blockSet);
+                    
+                    data.value.blocks.value.value.splice(0, _data.size[2]);
+                }
+                for (let i = 0; i < _data.palette.length; i++) {
+                    let name = _data.palette[i].Name.value;
+                    _data.palette[i] = name;
+                }
+                return _data;
             }
-            _data.blocks.push(blockSet);
-            
-            data.value.blocks.value.value.splice(0, _data.size[2]);
-        }
-        for (let i = 0; i < _data.palette.length; i++) {
-            let name = _data.palette[i].Name.value;
-            _data.palette[i] = name;
-        }
-
-        if (program_config.OutputAsJSON) {
-            console.log("Writing to disk...");
-            fs.writeFile(program_config.SaveAs+".json",JSON.stringify(_data),function(e){   // Write as JSON
-                if (e) { throw e; }
+            nbt.parse(fs.readFileSync(program_config.input), function(error, data) {
+                // {block:{value:{value:[{},{},{},...,{#N}]}}} // data
+                if (error) { throw error; }
+                let _data = cleanMapData(data);
+                
+                if (program_config.OutputAsJSON) {
+                    console.log("Writing to disk...");
+                    fs.writeFile(program_config.SaveAs+".json",JSON.stringify(_data),function(e){   // Write as JSON
+                        if (e) { throw e; }
+                    });
+                    console.log("Converted to JSON successfully!");
+                    return;
+                }
+                convert(_data);
             });
-            console.log("Converted to JSON successfully!");
-            return;
-        }
-        convert(_data);
-    });
-} else if (program_config.SaveAs) {
-    console.log("Reading JSON file...");
-    let path = program_config.SaveAs.split("/");
-    let name = path[path.length];
-    convert(JSON.parse(fs.readFileSync(name)));
-} else {
-    console.error("No input file given");
+        break;
+        case "json":
+            console.log("Reading JSON file...");
+            convert(JSON.parse(fs.readFileSync(name)));
+        break;
+        default:
+            console.error(`Sorry, I don't know how to read .${extension} file.`);
+        break;
+    }
 }
 
 function convert (data) {
 
     console.log("Converting to human readable instructions...");
 
-    let instr = "Convert.js "+metadata.version+"\nGet your own map art at https://rebane2001.com/mapartcraft/\nFork me at GitHub! "+metadata.GitHub+"\n";
+    let instr = `Convert.js ${metadata.version}\nGet your own map art at https://rebane2001.com/mapartcraft/\nFork me at GitHub! ${metadata.GitHub}\n`;
     let reports = "";
     let count = 0;
 
@@ -135,35 +147,35 @@ function convert (data) {
         let rblockCount = 1; // Repeated block count.
         let rowChunk = 1; // Row chunk counter
         
-        instr += "\n////////// line "+(x+1)+" //////////\n";
+        instr += `\n////////// line ${x+1} //////////\n`;
         for (let z = 1; z < data.size[2]; z++) {
+
             let pos = data.blocks[x][z].pos[1]; // Position of the block in 3D ([x,y,z])
             let dirr = pos - ppos; // Block placement Dirrection
             let pal = data.palette[data.blocks[x][z].state];
             
             if(count % 16 === 0){
-                instr += "\n-- chunk "+rowChunk+" --\n";
+                instr += `\n-- chunk ${rowChunk} --\n`;
                 rowChunk++;
             }
             
-            if(dirr > 1 || dirr < -1){reports += "Defect at [row "+(x+1)+", col "+(z)+"]. (Dirrection is "+(dirr >= 0 ? "+"+dirr:dirr)+")\n";} // Map defect detection
+            if(dirr > 1 || dirr < -1){
+                reports += `Defect at [row ${x+1}, col ${z}]. (Dirrection is ${(dirr >= 0 ? "+"+dirr:dirr)})\n`
+            } // Map defect detection
 
             if ( (rblockCount !== 1 && (ppalette !== pal || pdirr !== dirr) ) || count % 16 === 0 ) { // If block is crossed-chunk, or block is not the same and isn't the first block
-            
-                instr += "[row "+(x+1)+", col "+(z)+"] "                             //  "[row 0, col 0] "
-                        
-                        + pal.replace("minecraft:", (metadata.debug.blockState? data.blocks[x][z].state+": " : ""))
-                                                                                     //  "22: birch_plank"
-                        
-                        + " " + ( pdirr > 0   ? "UP"      // if                      //  " UP"
-                                : pdirr === 0 ? "FLAT"    // else if
-                                :              "DOWN" )  // else
-                        
-                        + (rblockCount>1?" x"+rblockCount: "") + "\n";                                 //  " x6\n"
-                                                                                     //  "[row 0, col 0] 22: birch_plank UP x6
+                
+                let palName = pal.replace("minecraft:", (metadata.debug.blockState? data.blocks[x][z].state+": " : ""));
+                let dirrInstr = ( pdirr > 0   ? "UP"
+                                : pdirr === 0 ? "FLAT"
+                                :               "DOWN" );
+                let blockCountInstr = (rblockCount>1?" x"+rblockCount: "");
+                
+                instr += `[row ${x+1}, col ${z}] ${palName} ${dirrInstr} ${blockCountInstr}\n`;
+                
                 ppalette = pal;
                 rblockCount = 1;
-
+                
             } else { // If blocks are the same, and it's inside the chunk
                 rblockCount++;
             }
@@ -175,15 +187,11 @@ function convert (data) {
         }
     }
 
-    if(reports){ console.error("----- ERROR REPORT ------\n"+reports); }
+    if(reports){console.error(`----- MAP DEFECT REPORT ------\nYou may want to report us the bug.\n${reports}`);}
 
     // Save file
 
     console.log("Writing to disk...");
-    fs.writeFile(program_config.SaveAs+".txt", instr, function(e){
-        if(e){
-            throw e;
-        }
-    });
+    fs.writeFile(program_config.SaveAs+".txt", instr, function(e){if(e){throw e;}});
     console.log("Done!");
 }
