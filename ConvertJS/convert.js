@@ -1,11 +1,36 @@
-// Inputs
-const Raw_NBT = "./rawExample.nbt", // NBT File Path
-      JSON_File = ""; // JSON File Path
+/**
+    MIT License
 
-// Outputs
-const SaveAs = "instructions"; // Name to save as your output.
-const OutputAsJSON = false; // Read NBT and convert it to JSON onto a file
+    Copyright (c) 2021 TanawatJukmongkol
 
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+**/
+
+const program_config = {
+    // Inputs
+    Raw_NBT: "./rawExample.nbt", // NBT File Path
+    JSON_File: ""; // JSON File Path
+
+    // Outputs
+    SaveAs: "instructions", // Name to save as your output.
+    OutputAsJSON: false // Read NBT and convert it to JSON onto a file
+};
 
 // How to use: 1. Configure some of the option above.
 //             2. Open CMD or terminal and type "node convert.js"
@@ -21,7 +46,7 @@ const OutputAsJSON = false; // Read NBT and convert it to JSON onto a file
 
 /////////////////////////////////////////////////////////////
 
-const program_config = {
+const metadata = {
     version: "v1.6.0 stable",
     debug: {
         blockState: false
@@ -35,14 +60,14 @@ const program_config = {
 
 /////////////////////////////////////////////////////////////
 
-console.log("Convert.js "+program_config.version);
+console.log("Convert.js "+metadata.version);
 
 const fs = require('fs'),
       nbt = require('./nbt.js');
 
-if (Raw_NBT) {
+if (program_config.Raw_NBT) {
     console.log("Reading NBT file...");
-    nbt.parse(fs.readFileSync(Raw_NBT), function(error, data) {
+    nbt.parse(fs.readFileSync(program_config.Raw_NBT), function(error, data) {
         // {block:{value:{value:[{},{},{},...,{#N}]}}} // data
         if (error) { throw error; }
         // 
@@ -76,9 +101,9 @@ if (Raw_NBT) {
             _data.palette[i] = name;
         }
 
-        if (OutputAsJSON) {
+        if (program_config.OutputAsJSON) {
             console.log("Writing to disk...");
-            fs.writeFile(SaveAs+".json",JSON.stringify(_data),function(e){   // Write as JSON
+            fs.writeFile(program_config.SaveAs+".json",JSON.stringify(_data),function(e){   // Write as JSON
                 if (e) { throw e; }
             });
             console.log("Converted to JSON successfully!");
@@ -86,9 +111,9 @@ if (Raw_NBT) {
         }
         convert(_data);
     });
-} else if (JSON_File) {
+} else if (program_config.SaveAs) {
     console.log("Reading JSON file...");
-    let path = JSON_File.split("/");
+    let path = program_config.SaveAs.split("/");
     let name = path[path.length];
     convert(JSON.parse(fs.readFileSync(name)));
 } else {
@@ -99,7 +124,7 @@ function convert (data) {
 
     console.log("Converting to human readable instructions...");
 
-    let instr = "Convert.js "+program_config.version+"\nGet your own map art at https://rebane2001.com/mapartcraft/\nFork me at GitHub! "+program_config.GitHub+"\n";
+    let instr = "Convert.js "+metadata.version+"\nGet your own map art at https://rebane2001.com/mapartcraft/\nFork me at GitHub! "+metadata.GitHub+"\n";
     let reports = "";
     let count = 0;
 
@@ -127,7 +152,7 @@ function convert (data) {
             
                 instr += "[row "+(x+1)+", col "+(z)+"] "                             //  "[row 0, col 0] "
                         
-                        + pal.replace("minecraft:", (program_config.debug.blockState? data.blocks[x][z].state+": " : ""))
+                        + pal.replace("minecraft:", (metadata.debug.blockState? data.blocks[x][z].state+": " : ""))
                                                                                      //  "22: birch_plank"
                         
                         + " " + ( pdirr > 0   ? "UP"      // if                      //  " UP"
@@ -150,12 +175,12 @@ function convert (data) {
         }
     }
 
-    if(reports){ console.error(reports); }
+    if(reports){ console.error("----- ERROR REPORT ------\n"+reports); }
 
     // Save file
 
     console.log("Writing to disk...");
-    fs.writeFile(SaveAs+".txt", instr+"\n"+reports, function(e){
+    fs.writeFile(program_config.SaveAs+".txt", instr, function(e){
         if(e){
             throw e;
         }
