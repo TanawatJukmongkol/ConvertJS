@@ -46,7 +46,7 @@ const program_config = {
 /////////////////////////////////////////////////////////////
 
 const metadata = {
-    version: "v1.6.0 stable",
+    version: "v1.6.3 stable",
     debug: {
         blockState: false
     },
