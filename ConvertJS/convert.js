@@ -25,7 +25,7 @@
 const program_config = {
     // Inputs
     Raw_NBT: "./rawExample.nbt", // NBT File Path
-    JSON_File: ""; // JSON File Path
+    JSON_File: "", // JSON File Path
 
     // Outputs
     SaveAs: "instructions", // Name to save as your output.
